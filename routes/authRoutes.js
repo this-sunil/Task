@@ -1,8 +1,9 @@
 const express=require("express");
 const {login,register,fetchProfile}=require("../controller/authController");
+const multer = require("multer");
 const router=express.Router();
-
-router.post("/login",login);
+const upload=multer();
+router.post("/login",upload.none(),login);
 router.post("/register",register);
-router.post("/fetchProfile",fetchProfile);
+router.post("/fetchProfile",upload.none(),fetchProfile);
 module.exports=router;
