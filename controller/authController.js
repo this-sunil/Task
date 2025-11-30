@@ -85,7 +85,7 @@ const login = async (req, resp) => {
         msg: "Invalid mobile number or password",
       });
     }
-    const isMatch = bcrypt.compare(password, rows[0].password);
+    const isMatch =await bcrypt.compare(password, rows[0].password);
     // Return successful login response
     if (isMatch) {
       return resp.status(200).json({
@@ -141,8 +141,7 @@ const register = async (req, res) => {
     }
     const imgPath = req.file?req.file.filename:"";
     console.log(`Image Path=>${imgPath.filename}`);
-    const hashPass = bcrypt.hash(password);
-
+    const hashPass =await bcrypt.hash(password);
     const query = `INSERT INTO users (full_name, mobile, email, password, photo) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
     const { rows } = await pool.query(query, [
       full_name,
