@@ -141,7 +141,7 @@ const register = async (req, res) => {
     }
     const imgPath = req.file?req.file.filename:"";
     console.log(`Image Path=>${imgPath.filename}`);
-    const hashPass = bcrypt.hash(password);
+    const hashPass = bcrypt.hash(password,10);
     const query = `INSERT INTO users (full_name, mobile, email, password, photo) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
     const { rows } = await pool.query(query, [
       full_name,
