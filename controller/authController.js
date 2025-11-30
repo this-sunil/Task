@@ -1,28 +1,28 @@
-const pool=require('../database/pool');
-const multer=require("multer");
-const path=require("path");
-const fs=require("fs");
-
-const storage=multer.diskStorage({
-  destination:(req,file,cb)=>{
+const pool = require("../database/pool");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const bcrypt = require("bcrypt");
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, "../upload");
-   if(!fs.existsSync(uploadPath)){
-    fs.mkdirSync(uploadPath);
-   }
-   cb(null,uploadPath);
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const timestamp = Date.now();  
-    const fileExtension = path.extname(file.originalname); 
-    const fileName = `${timestamp}${fileExtension}`; 
-    cb(null, fileName);  
-  }
+    const timestamp = Date.now();
+    const fileExtension = path.extname(file.originalname);
+    const fileName = `${timestamp}${fileExtension}`;
+    cb(null, fileName);
+  },
 });
 
-const upload=multer({
-  storage:storage,
-  limits:{fieldSize:5 * 1024 * 1024},
-}).single('photo');
+const upload = multer({
+  storage: storage,
+  limits: { fieldSize: 5 * 1024 * 1024 },
+}).single("photo");
 
 const createTable = `
   CREATE TABLE IF NOT EXISTS users (
@@ -35,16 +35,15 @@ const createTable = `
   );
 `;
 
-
-pool.query(createTable,(err,result)=>{
-    if(err){
-      console.log("Failed to Create User Table",err.stack);
-    }
-    console.log("User Table Created or already exist");
+pool.query(createTable, (err, result) => {
+  if (err) {
+    console.log("Failed to Create User Table", err.stack);
+  }
+  console.log("User Table Created or already exist");
 });
 
 const login = async (req, resp) => {
-  const { mobile , password } = req.body;
+  const { mobile, password } = req.body;
   console.log(`Mobile =>${mobile}`);
 
   // Check if mobile is provided
@@ -86,15 +85,21 @@ const login = async (req, resp) => {
         msg: "Invalid mobile number or password",
       });
     }
-
+    const isMatch = bcrypt.compare(password, rows[0].password);
     // Return successful login response
-    return resp.status(200).json({
-      status: true,
-      msg: "Login Successfully",
-      result: {
-        "id":rows[0].id
-      }, // Send the user data (first row)
-    });
+    if (isMatch) {
+      return resp.status(200).json({
+        status: true,
+        msg: "Login Successfully",
+        result: rows[0], // Send the user data (first row)
+      });
+    }
+    else{
+      return resp.status(400).json({
+        status: false,
+        msg: "Wrong password"
+      });
+    }
   } catch (error) {
     console.error("Error during login:", error);
     return resp.status(500).json({
@@ -104,90 +109,98 @@ const login = async (req, resp) => {
   }
 };
 
-
 const register = async (req, res) => {
   try {
-   
     await new Promise((resolve, reject) => {
       upload(req, res, (err) => {
         if (err) {
-          reject(err); 
+          reject(err);
         } else {
           resolve();
         }
       });
     });
 
-    
     const { full_name, mobile, email, password } = req.body;
-    
 
-   
     if (!full_name || !mobile || !email || !password || !req.file) {
-
-     
       return res.json({
         status: false,
-        msg: 'This field is required: full name, email, phone, password, and photo',
+        msg: "This field is required: full name, email, phone, password, and photo",
       });
     }
-    
-   
+
     const checkQuery = `SELECT * FROM users WHERE mobile = $1 OR email = $2`;
     const { rows: existUser } = await pool.query(checkQuery, [mobile, email]);
 
     if (existUser.length > 0) {
       return res.status(400).json({
         status: false,
-        msg: 'User already exists',
+        msg: "User already exists",
       });
     }
-    const imgPath = req.file;
+    const imgPath = req.file?req.file.filename:"";
     console.log(`Image Path=>${imgPath.filename}`);
-    
+    const hashPass = bcrypt.hash(password);
+
     const query = `INSERT INTO users (full_name, mobile, email, password, photo) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
-    const result = await pool.query(query, [
+    const { rows } = await pool.query(query, [
       full_name,
       mobile,
       email,
-      password,
-      `/upload/${imgPath.filename}`,
+      hashPass,
+      `/upload/${imgPath}`,
     ]);
 
-    
-    return res.status(200).json({
+    if(rows.length>0){
+      return res.status(200).json({
       status: true,
-      msg: 'Registered successfully',
-      result: {
-        "id":result.rows[0].id
-      }, 
+      msg: "Registered successfully",
+      result: rows[0],
     });
-    
+    }
   } catch (err) {
     console.error(err);
     return res.status(500).json({
       status: false,
-      msg: 'Internal server error',
+      msg: "Internal server error",
       error: err.message,
     });
   }
 };
-const fetchProfile= async(req,res)=>{
-  const { userid }=req.body;
-  const query=`select * from users where id=$1`;
-  const values=[userid];
-  const result=await pool.query(query,values);
-  if(!result){
+const fetchProfile = async (req, res) => {
+  const { userid } = req.body;
+  const query = `select * from users where id=$1`;
+  const values = [userid];
+  const result = await pool.query(query, values);
+  if (!result) {
     return res.send({
-      "status":true,
-      "msg":"Invalid User ID",
-    })
+      status: true,
+      msg: "Invalid User ID",
+    });
   }
   return res.send({
-    "status":true,
-    "msg":"Profile Fetch Successfully",
-    "result":result.rows[0],
-  })
+    status: true,
+    msg: "Profile Fetch Successfully",
+    result: result.rows[0],
+  });
 };
-
-module.exports={login,register,fetchProfile};
+const getAllUser = async (req, res) => {
+  try {
+    const query = `SELECT * FROM users`;
+    const { rows } = await pool.query(query);
+    if (rows.length > 0) {
+      return res.status(200).send({
+        status: true,
+        msg: "Fetch All Users",
+        result: rows,
+      });
+    }
+  } catch (error) {
+    return res.status(500).send({
+      status: false,
+      msg: "Internal Server Error",
+    });
+  }
+};
+module.exports = { login, register, fetchProfile, getAllUser };

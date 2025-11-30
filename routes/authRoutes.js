@@ -1,9 +1,10 @@
 const express=require("express");
-const {login,register,fetchProfile}=require("../controller/authController");
+const {login,register,fetchProfile, getAllUser}=require("../controller/authController");
 const multer = require("multer");
 const router=express.Router();
 const upload=multer();
 router.post("/login",upload.none(),login);
 router.post("/register",register);
 router.post("/fetchProfile",upload.none(),fetchProfile);
+router.get("/getAllUser",upload.none(),getAllUser);
 module.exports=router;
