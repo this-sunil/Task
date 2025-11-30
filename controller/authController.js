@@ -72,8 +72,8 @@ const login = async (req, resp) => {
 
   try {
     // Prepare the query using parameterized inputs to prevent SQL injection
-    const query = `SELECT * FROM users WHERE mobile = $1 AND password = $2`;
-    const values = [mobile, password];
+    const query = `SELECT * FROM users WHERE mobile = $1`;
+    const values = [mobile];
 
     // Execute the query with parameters
     const { rows } = await pool.query(query, values);
