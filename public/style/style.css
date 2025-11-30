@@ -1,0 +1,117 @@
+/* Importing Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Suggested addition for layout consistency */
+}
+
+/* Base font */
+body {
+    font-family: 'Bitter', sans-serif;
+}
+
+/* Root variables for colors */
+:root {
+    --sidebar-clr: #333945;
+    --menu-clr: green;
+    --white-clr: white;
+}
+
+/* Flex container */
+.container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+/* Top navbar styles */
+#navbar-site {
+    display: flex;
+    height: 60px;
+    border-bottom: 1px solid var(--white-clr);
+    box-sizing: border-box;
+    gap: 2px;
+    align-items: center;
+    text-align: center;
+    color: var(--white-clr);
+    padding: 8px 10px;
+    background-color: var(--sidebar-clr); /* Suggested for visibility */
+}
+
+/* Navbar logo image */
+#navbar-site img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%; /* More semantic than hard-coding 30px */
+}
+
+/* Sidebar styling */
+#sidebar {
+    width: 250px;
+    height: 100vh;
+    position: sticky;
+    top: 10px;
+    background-color: var(--sidebar-clr);
+    transition: width 0.4s ease-in-out;
+    overflow-x: hidden;
+}
+
+/* Collapsed sidebar */
+#sidebar.collapse {
+    width: 0px;
+}
+
+/* Sidebar links */
+
+
+
+
+/* Icon styles */
+.material-symbols-outlined {
+    color: var(--white-clr);
+    background-color: #07b7db;
+    border: 1px solid var(--white-clr);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Menu item base style */
+#sidebar .menu-item .menu-link{
+   display: flex;
+   width: auto;
+   flex-direction: column;
+    list-style: none;
+    padding: 12px 15px;
+    margin: 10px;
+    background: none;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--white-clr);
+    
+}
+#sidebar .menu-item .menu-link.active:nth-child(1){
+     background-color: #07b7db;
+}
+#sidebar .menu-item .menu-link:is(:hover,.active){
+    background-color: #07b7db;
+    cursor: pointer;
+}
+
+
+
+
+
+/* Main content area */
+#main-content {
+    width: 100%;
+    padding: 20px; /* Suggested for spacing */
+}
+
+/* Icon layout inside main content */
+#main-content .material-symbols-outlined {
+    display: flex;
+    flex-direction: row; /* Redundant for icon by itself */
+}
